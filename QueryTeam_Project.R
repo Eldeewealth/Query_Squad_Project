@@ -231,3 +231,26 @@ ggplot(combined_data, aes(x = Price)) +
 # Save the plot to a file
 ggsave("line_plot_year_price_mileage.png", width = 10, height = 6, dpi = 300)
 
+# Create a scatter plot
+scatter_plot <- ggplot(combined_data, aes(x = Mileage, y = Price, color = Source)) +
+  geom_point(alpha = 0.6) + # Set alpha for transparency
+  scale_color_manual(values = c("TheAA" = "green", "Cinch" = "blue")) + # Set colors for TheAA and Cinch
+  labs(
+    title = "Car Price vs Mileage",
+    x = "Mileage (in miles)",
+    y = "Price (£)",
+    color = "Source"
+  ) +
+  theme_minimal() + # Apply a minimal theme
+  theme(
+    legend.position = "top", # Move legend to the top
+    plot.title = element_text(hjust = 0.5), # Center the title
+    axis.title = element_text(size = 12), # Set axis title size
+    axis.text = element_text(size = 10) # Set axis text size
+  )
+
+# Save the plot using ggsave
+ggsave("car_price_vs_mileage_plot.png", plot = scatter_plot, width = 8, height = 6, dpi = 300)
+
+
+
