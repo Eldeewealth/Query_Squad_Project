@@ -36,4 +36,36 @@ for (page_num in 1:15) {
   car_price_theaa <- parsed_html_theaa %>%
     html_nodes(".total-price") %>%
     html_text(trim = TRUE)
+
+  car_details_theaa <- parsed_html_theaa %>%
+    html_nodes(".vl-specs") %>%
+    html_text(trim = TRUE)
+  
+  # Split Car Details into components
+  car_details_split_theaa <- str_split(car_details_theaa, "\\n\\s*•\\s*\\n", simplify = TRUE)
+  
+  car_year_theaa <- car_details_split_theaa[, 1] %>% str_trim() # Year
+  car_mileage_theaa <- car_details_split_theaa[, 2] %>% str_trim() # Mileage
+  car_fuel_theaa <- car_details_split_theaa[, 3] %>% str_trim() # Fuel
+  car_transmission_theaa <- car_details_split_theaa[, 4] %>% str_trim() # Transmission
+  
+  # Combine into a data frame for the current page
+  cars_data_theaa <- data.frame(
+    Name = car_name_theaa,
+    Price = car_price_theaa,
+    Year = car_year_theaa,
+    Mileage = car_mileage_theaa,
+    Fuel = car_fuel_theaa,
+    Transmission = car_transmission_theaa,
+    stringsAsFactors = FALSE
+  )
+  
+  # Store the data for the current page in the list
+  all_pages_data_theaa[[page_num]] <- cars_data_theaa
+  
+  # Optional: Print progress
+  print(paste("Scraped TheAA page", page_num, "\n"))
 }
+
+# Combine data from all pages of TheAA into one data frame
+cars_data_theaa_all <- do.call(rbind, all_pages_data_theaa)
