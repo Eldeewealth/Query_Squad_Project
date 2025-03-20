@@ -174,3 +174,41 @@ cars_data_cinch_all <- do.call(rbind, all_pages_data_cinch)
 
 # View the final combined data
 print(cars_data_cinch_all)
+
+# Combine the datasets
+cars_data_theaa_all$Source <- "TheAA" # Add a "Source" column for TheAA data
+cars_data_cinch_all$Source <- "Cinch" # Add a "Source" column for Cinch data
+
+# Combine the datasets into one
+combined_data <- rbind(cars_data_theaa_all, cars_data_cinch_all)
+
+combined_data$Price <- str_replace_all(combined_data$Price, "£|,|\\+ VAT", "") # Remove £, commas, and "+ VAT"
+combined_data$Price <- as.numeric(as.character(combined_data$Price)) # Convert to numeric
+
+# View the cleaned Price column
+print(combined_data$Price)
+
+# Clean the Mileage column
+combined_data$Mileage <- str_replace_all(combined_data$Mileage, " miles", "") # Remove " miles"
+combined_data$Mileage<- as.numeric(str_replace_all(combined_data$Mileage, ",", ""))
+
+# View the final dataset
+print(combined_data)
+
+# Save the data to a CSV file
+write.csv(combined_data, "scraped_cars_data.csv", row.names = FALSE)
+
+# Summary statistics for numerical columns
+summary_stats <- combined_data %>%
+  summarise(
+    Mean_Price = mean(Price, na.rm = TRUE),
+    Median_Price = median(Price, na.rm = TRUE),
+    Min_Price = min(Price, na.rm = TRUE),
+    Max_Price = max(Price, na.rm = TRUE),
+    Mean_Mileage = mean(Mileage, na.rm = TRUE),
+    Median_Mileage = median(Mileage, na.rm = TRUE),
+    Min_Mileage = min(Mileage, na.rm = TRUE),
+    Max_Mileage = max(Mileage, na.rm = TRUE)
+  )
+
+print(summary_stats)
