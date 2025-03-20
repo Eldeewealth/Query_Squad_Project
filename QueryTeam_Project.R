@@ -42,12 +42,12 @@ for (page_num in 1:15) {
     html_text(trim = TRUE)
 
   # Split Car Details into components
-  car_details_split_theaa <- str_split(car_details_theaa, "\\n\\s*•\\s*\\n", simplify = TRUE)
+  car_details_split_theaa <- str_split(car_details_theaa, "\\n\\s*•\\s*\\n", simplify = TRUE) # nolint # nolint
 
   car_year_theaa <- car_details_split_theaa[, 1] %>% str_trim() # Year
   car_mileage_theaa <- car_details_split_theaa[, 2] %>% str_trim() # Mileage
   car_fuel_theaa <- car_details_split_theaa[, 3] %>% str_trim() # Fuel
-  car_transmission_theaa <- car_details_split_theaa[, 4] %>% str_trim() # Transmission
+  car_transmission_theaa <- car_details_split_theaa[, 4] %>% str_trim() # Transmission # nolint # nolint
 
   # Combine into a data frame for the current page
   cars_data_theaa <- data.frame(
@@ -252,5 +252,27 @@ scatter_plot <- ggplot(combined_data, aes(x = Mileage, y = Price, color = Source
 # Save the plot using ggsave
 ggsave("car_price_vs_mileage_plot.png", plot = scatter_plot, width = 8, height = 6, dpi = 300)
 
+# HeatMap visualisation
+
+#  Correlation Heatmap
+car_data <- read.csv("scraped_cars_data.csv") 
+
+numeric_data <- car_data %>% select(Price, Mileage, Year)
+cor_matrix <- cor(numeric_data, use="complete.obs")
+ggcorrplot(cor_matrix, method="square", type="lower", lab=TRUE, lab_size=3, 
+           title="Correlation Heatmap of Car Data")
+
+heatmap_plot <- ggcorrplot(cor_matrix, 
+                           method = "square", 
+                           type = "lower", 
+                           lab = TRUE, 
+                           lab_size = 3, 
+                           title = "Correlation Heatmap of Car Data")
+# Save plot as PDF using ggsave()
+ggsave(filename = "correlation_heatmap.pdf", 
+       plot = heatmap_plot, 
+       width = 10, 
+       height = 8, 
+       dpi = 300)           
 
 
