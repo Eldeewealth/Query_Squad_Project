@@ -118,3 +118,59 @@ for (page_num in 1:max_page) {
   
   # Parse the HTML content for Cinch
   parsed_html_cinch <- read_html(content_cinch)
+
+  # Extract car details for Cinch
+  car_name_cinch <- parsed_html_cinch %>%
+    html_nodes(".vehicle-card_link__AvRBT") %>%
+    html_text(trim = TRUE)
+  
+  # Extract car price for Cinch
+  car_price_cinch <- parsed_html_cinch %>%
+    html_nodes(".price_cashPrice__fSwOY") %>%
+    html_text(trim = TRUE)
+  car_price_cinch <- str_replace(car_price_cinch, "Full price.", "") # Remove "Full price."
+  
+  # Extract car details for Cinch
+  car_details_cinch <- parsed_html_cinch %>%
+    html_nodes(".specs-list_upperCase__62SjC") %>%
+    html_text(trim = TRUE)
+  
+  # Clean car details for Cinch
+  car_details_cinch <- str_replace_all(car_details_cinch,
+                                       c("Vehicle Year," = "",
+                                         "Mileage," = "",
+                                         "Fuel Type," = "",
+                                         "Transmission Type," = ""))
+  
+  # Split Car Details into Year, Mileage, Fuel, Transmission
+  car_details_split_cinch <- str_split(car_details_cinch, "\\s+", simplify = TRUE) # Split by spaces
+  
+  # Handle cases where the split does not return expected columns
+  car_year_cinch <- ifelse(ncol(car_details_split_cinch) >= 2, car_details_split_cinch[, 2], NA)
+  car_mileage_cinch <- ifelse(ncol(car_details_split_cinch) >= 4, paste(car_details_split_cinch[, 3], car_details_split_cinch[, 4]), NA)
+  car_fuel_cinch <- ifelse(ncol(car_details_split_cinch) >= 5, car_details_split_cinch[, 5], NA)
+  car_transmission_cinch <- ifelse(ncol(car_details_split_cinch) >= 8, paste(car_details_split_cinch[, 6], car_details_split_cinch[, 7], car_details_split_cinch[, 8]), NA)
+  
+  # Combine into a data frame for the current page
+  cars_data_cinch <- data.frame(
+    Name = car_name_cinch,
+    Price = car_price_cinch,
+    Year = car_year_cinch,
+    Mileage = car_mileage_cinch,
+    Fuel = car_fuel_cinch,
+    Transmission = car_transmission_cinch,
+    stringsAsFactors = FALSE
+  )
+  
+  # Store the data for the current page in the list
+  all_pages_data_cinch[[page_num]] <- cars_data_cinch
+  
+  # Optional: Print progress
+  cat("Scraped Cinch page", page_num, "\n")
+}
+
+# Combine data from all pages of Cinch into one data frame
+cars_data_cinch_all <- do.call(rbind, all_pages_data_cinch)
+
+# View the final combined data
+print(cars_data_cinch_all)
