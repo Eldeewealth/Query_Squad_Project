@@ -20,19 +20,19 @@ for (page_num in 1:15) {
   } else {
     url_theaa <- paste0("https://www.theaa.com/used-cars/displaycars?fullpostcode=&page=", page_num, "&county=greater-manchester") # nolint
   }
-   # nolint
+  # nolint
   # Fetch the webpage content for TheAA
   response_theaa <- GET(url_theaa)
   content_theaa <- content(response_theaa, as = "text", encoding = "UTF-8")
-   # nolint
+  # nolint
   # Parse the HTML content for TheAA
   parsed_html_theaa <- read_html(content_theaa)
-   # nolint
+  # nolint
   # Extract car details for TheAA
   car_name_theaa <- parsed_html_theaa %>%
     html_nodes(".make-model-text") %>%
     html_text(trim = TRUE)
-   # nolint
+  # nolint
   car_price_theaa <- parsed_html_theaa %>%
     html_nodes(".total-price") %>%
     html_text(trim = TRUE)
@@ -40,15 +40,15 @@ for (page_num in 1:15) {
   car_details_theaa <- parsed_html_theaa %>%
     html_nodes(".vl-specs") %>%
     html_text(trim = TRUE)
-  
+
   # Split Car Details into components
   car_details_split_theaa <- str_split(car_details_theaa, "\\n\\s*•\\s*\\n", simplify = TRUE)
-  
+
   car_year_theaa <- car_details_split_theaa[, 1] %>% str_trim() # Year
   car_mileage_theaa <- car_details_split_theaa[, 2] %>% str_trim() # Mileage
   car_fuel_theaa <- car_details_split_theaa[, 3] %>% str_trim() # Fuel
   car_transmission_theaa <- car_details_split_theaa[, 4] %>% str_trim() # Transmission
-  
+
   # Combine into a data frame for the current page
   cars_data_theaa <- data.frame(
     Name = car_name_theaa,
@@ -59,7 +59,7 @@ for (page_num in 1:15) {
     Transmission = car_transmission_theaa,
     stringsAsFactors = FALSE
   )
-  
+
   # Store the data for the current page in the list
   all_pages_data_theaa[[page_num]] <- cars_data_theaa
 
