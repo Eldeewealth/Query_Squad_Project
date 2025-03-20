@@ -1,5 +1,5 @@
 # Query_Squad_Project
- This is an MSc. Data Analytics Project by a committed team.
+ This is an MSc. Data Analytics Project by a dedicated team.
 ## Overview
 
 The **Query Squad Project** is a web scraping and data analysis project aimed at extracting and analyzing used car data from two popular websites: [TheAA](https://www.theaa.com) and [Cinch](https://www.cinch.co.uk). This project utilizes R programming along with several libraries to scrape, clean, and analyze the data, producing meaningful visualizations and insights.
@@ -32,7 +32,7 @@ To run this project locally, follow these steps:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/query-squad-project.git
+   git clone https://github.com/Eldeewealth/Query_Squad_Project.git
    cd query-squad-project
    ```
 
