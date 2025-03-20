@@ -4,10 +4,13 @@ install.packages("httr") # For handling HTTP requests
 install.packages("dplyr") # For data manipulation
 install.packages("stringr") # For string manipulation
 # Load the libraries
-library(rvest)
-library(httr)
-library(dplyr)
-library(stringr)
+library(rvest) # For web scraping and HTML parsing
+library(httr) # For handling HTTP requests and responses
+library(dplyr) # For data manipulation and transformation
+library(stringr) # For string manipulation and regular expressions
+library(ggplot2) # For data visualization and plotting
+library(ggcorrplot) # For correlation heatmap visualization
+
 
 # Initialize empty lists to store data for all pages of both websites
 all_pages_data_theaa <- list()
@@ -275,4 +278,12 @@ ggsave(filename = "correlation_heatmap.pdf",
        height = 8, 
        dpi = 300)           
 
-
+# Create the box plot for Price by Year and Mileage by Year in one plot
+ggplot(combined_data) + 
+  geom_boxplot(aes(x = factor(Year), y = Price, color = "Price", fill = "blue"), alpha = 0.3) +
+  geom_boxplot(aes(x = factor(Year), y = Mileage, color = "Mileage", fill = "red"), alpha = 0.3) +
+  labs(title = "Box Plot of Price and Mileage by Year",
+       x = "Year",
+       y = "Value") +
+  scale_color_manual(values = c("Price" = "blue", "Mileage" = "red")) +
+  theme_minimal()
