@@ -212,3 +212,22 @@ summary_stats <- combined_data %>%
   )
 
 print(summary_stats)
+
+# Create the box plot for Price by Year and Mileage by Year in one plot
+ggplot(combined_data) + 
+  geom_boxplot(aes(x = factor(Year), y = Price, color = "Price", fill = "blue"), alpha = 0.3) +
+  geom_boxplot(aes(x = factor(Year), y = Mileage, color = "Mileage", fill = "red"), alpha = 0.3) +
+  labs(title = "Box Plot of Price and Mileage by Year",
+       x = "Year",
+       y = "Value") +
+  scale_color_manual(values = c("Price" = "blue", "Mileage" = "red")) +
+  theme_minimal()
+
+# Histogram of car prices
+ggplot(combined_data, aes(x = Price)) +
+  geom_histogram(binwidth = 5000, fill = "blue", color = "black", alpha = 0.7) +
+  labs(title = "Distribution of Car Prices", x = "Price (£)", y = "Car Number") +
+  theme_minimal()
+# Save the plot to a file
+ggsave("line_plot_year_price_mileage.png", width = 10, height = 6, dpi = 300)
+
