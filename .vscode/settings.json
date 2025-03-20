@@ -1,0 +1,9 @@
+{
+    "r.rpath.windows": "C:\\Program Files\\R\\R-4.4.3\\bin",
+    "debug.javascript.autoAttachSmartPattern": [
+        "${workspaceFolder}/**",
+        "!**/node_modules/**",
+        "**/$KNOWN_TOOLS$/**",
+        ""
+    ]
+}
