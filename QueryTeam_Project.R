@@ -62,7 +62,7 @@ for (page_num in 1:15) {
   
   # Store the data for the current page in the list
   all_pages_data_theaa[[page_num]] <- cars_data_theaa
-  
+
   # Optional: Print progress
   print(paste("Scraped TheAA page", page_num, "\n"))
 }
