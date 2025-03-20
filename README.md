@@ -43,7 +43,7 @@ To run this project locally, follow these steps:
 
 3. Run the script in your R environment:
    ```R
-   source("scrape_and_analyze.R")
+   source("QueryTeam_Project.R")
    ```
 
 ---
