@@ -13,6 +13,8 @@ library(ggcorrplot) # For correlation heatmap visualization
 library(mice) # For handling missing data and imputation
 library(robots.txt) # For checking robots.txt file
 
+# The script uses the robots.txt R package, specifically the paths_allowed() function
+# to check if scraping is permitted on the target websites
 # Function to check if scraping is allowed
 is_scraping_allowed <- function(url) {
   paths_allowed(url)
@@ -130,7 +132,7 @@ for (page_num in 1:max_page) {
   
   # Check if the request was successful
   if (response_cinch$status_code != 200) {
-    cat("Failed to fetch page", page_num, "\n")
+    print(paste("Failed to fetch page", page_num))
     next
 
     set.sleep(1) # Pause for 1 second between requests to avoid overwhelming the server
@@ -197,7 +199,7 @@ cars_data_cinch_all <- do.call(rbind, all_pages_data_cinch)
 combined_data <- full_join(cars_data_theaa_all, cars_data_cinch_all, by = c("Name", "Price", "Year", "Mileage", "Fuel", "Transmission"))
 combined_data <- distinct(combined_data)
 
-print("Data merged and duplicates removed.")
+print("Data merged and dupliprint(pastees removed.")
 
 # Detect missing values using colSums
 missing_values_summary <- colSums(is.na(combined_data))
@@ -217,14 +219,14 @@ print(missing_values_summary)
 combined_data$Price <- str_replace_all(combined_data$Price, "£|,|\\+ VAT", "")
 combined_data$Price <- as.numeric(as.character(combined_data$Price))
 
-# Clean the Mileage column
+# Clean the Mileage column and converted it to numeric format
 combined_data$Mileage <- str_replace_all(combined_data$Mileage, " miles", "")
 combined_data$Mileage <- as.numeric(str_replace_all(combined_data$Mileage, ",", ""))
 
-# Convert Year to numeric
+# Converts Year to numeric format
 combined_data$Year <- as.numeric(combined_data$Year)
 
-# Box Plot for Price and Mileage by Year (After Imputation)
+# Box Plot for Price and Mileage by Year (Before Imputation) to detct outliers
 ggplot(combined_data, aes(x = factor(Year))) + 
   geom_boxplot(aes(y = Price, fill = "Price"), alpha = 0.5, outlier.color = "red") +
   geom_boxplot(aes(y = Mileage, fill = "Mileage"), alpha = 0.5, outlier.color = "blue") +
@@ -234,7 +236,7 @@ ggplot(combined_data, aes(x = factor(Year))) +
        y = "Value") +
   theme_minimal()
 
-# Function to detect outliers using IQR
+# This function calculates the IQR and identifies outliers based on the IQR method
 detect_outliers <- function(column) {
   Q1 <- quantile(column, 0.25, na.rm = TRUE)
   Q3 <- quantile(column, 0.75, na.rm = TRUE)
@@ -242,7 +244,7 @@ detect_outliers <- function(column) {
   lower_bound <- Q1 - 1.5 * IQR
   upper_bound <- Q3 + 1.5 * IQR
   
-  # Identify outliers
+  # Identify outliers using the lower and upper bounds
   outliers <- column[column < lower_bound | column > upper_bound]
   
   return(list(
@@ -260,14 +262,13 @@ mileage_outliers <- detect_outliers(combined_data$Mileage)
 # Output the results for Price
 print("Outliers in Price:")
 print(price_outliers$outliers)
-cat("Number of outliers in Price:", price_outliers$num_outliers, "\n")
+print(paste("Number of outliers in Price:", price_outliers$num_outliers))
 
 # Output the results for Mileage
 print("Outliers in Mileage:")
-print(mileage_outliers$outliers)
-cat("Number of outliers in Mileage:", mileage_outliers$num_outliers, "\n")
+print(paste("Number of outliers in Mileage:", mileage_outliers$num_outliers))
 
-# Function to replace outliers with NA
+# Function to replace outliers with NA values
 replace_outliers_with_na <- function(column) {
   Q1 <- quantile(column, 0.25, na.rm = TRUE)
   Q3 <- quantile(column, 0.75, na.rm = TRUE)
@@ -278,16 +279,16 @@ replace_outliers_with_na <- function(column) {
   return(column)
 }
 
-# Replace outliers in Price and Mileage columns with NA
+# Replace outliers in Price and Mileage columns with NA values
 combined_data$Price <- replace_outliers_with_na(combined_data$Price)
 combined_data$Mileage <- replace_outliers_with_na(combined_data$Mileage)
 
-# Check to confirm missing values using colSums
+# Check to confirm missing values using colSums after replacing outliers
 check_NA <- colSums(is.na(combined_data))
 print("Summary of Missing Values After Replacing Outliers:")
 print(check_NA)
 
-# Impute missing values using mice
+# Impute missing values using mice package
 imputed_data <- mice(combined_data, 5) # Predictive mean matching
 complete_data <- complete(imputed_data)
 
@@ -299,55 +300,45 @@ check_NA_after_imputation <- colSums(is.na(complete_data))
 print("Summary of Missing Values After Imputation:")
 print(check_NA_after_imputation)
 
-# Box Plot for Price and Mileage by Year (After Imputation)
-ggplot(complete_data, aes(x = factor(Year))) + 
-  geom_boxplot(aes(y = Price, fill = "Price"), alpha = 0.5, outlier.color = "red") +
-  geom_boxplot(aes(y = Mileage, fill = "Mileage"), alpha = 0.5, outlier.color = "blue") +
-  scale_fill_manual(values = c("Price" = "blue", "Mileage" = "red")) +
-  labs(title = "Box Plot of Price and Mileage by Year (After Imputation)",
-       x = "Year",
-       y = "Value") +
-  theme_minimal()
-
 # Detect outliers in Price and Mileage after imputation
 price_outliers_after_imputation <- detect_outliers(complete_data$Price)
 mileage_outliers_after_imputation <- detect_outliers(complete_data$Mileage)
 
-# Output the results for Price
+# Output the results for Price to check if outliers have been removed
 print("Outliers in Price After Imputation:")
 print(price_outliers_after_imputation$outliers)
-cat("Number of outliers in Price After Imputation:", price_outliers_after_imputation$num_outliers, "\n")
+print(paste("Number of outliers in Price After Imputation:", price_outliers_after_imputation$num_outliers))
 
-# Output the results for Mileage
+# Output the results for Mileage to check if outliers have been removed
 print("Outliers in Mileage After Imputation:")
 print(mileage_outliers_after_imputation$outliers)
-cat("Number of outliers in Mileage After Imputation:", mileage_outliers_after_imputation$num_outliers, "\n")
+print(paste("Number of outliers in Mileage After Imputation:", mileage_outliers_after_imputation$num_outliers))
 
-# Drop rows with outliers in Price and Mileage
+# Drop rows with outliers in Price and Mileage after imputation to clean the data
 cleaned_data <- complete_data %>%
   filter(Price >= price_outliers_after_imputation$lower_bound & Price <= price_outliers_after_imputation$upper_bound) %>%
   filter(Mileage >= mileage_outliers_after_imputation$lower_bound & Mileage <= mileage_outliers_after_imputation$upper_bound)
 
 # Verify the number of rows after dropping outliers
-cat("Number of rows before dropping outliers:", nrow(complete_data), "\n")
-cat("Number of rows after dropping outliers:", nrow(cleaned_data), "\n")
+print(paste("Number of rows before dropping outliers:", nrow(complete_data)))
+print(paste("Number of rows after dropping outliers:", nrow(cleaned_data)))
 
 
 # Detect outliers in Price and Mileage after dropping the rows that have outliers
 price_outliers_after_cleaning <- detect_outliers(cleaned_data$Price)
 mileage_outliers_after_cleaning <- detect_outliers(cleaned_data$Mileage)
 
-# Output the results for Price
+# Output the results for Price to check if outliers have been removed
 print("Outliers in Price After Imputation:")
 print(price_outliers_after_cleaning$outliers)
-cat("Number of outliers in Price After Imputation:", price_outliers_after_imputation$num_outliers, "\n")
+print(paste("Number of outliers in Price After Imputation:", price_outliers_after_imputation$num_outliers))
 
-# Output the results for Mileage
+# Output the results for Mileage to check if outliers have been removed
 print("Outliers in Mileage After Imputation:")
 print(mileage_outliers_after_cleaning$outliers)
-cat("Number of outliers in Mileage After Imputation:", mileage_outliers_after_imputation$num_outliers, "\n")
+print(paste("Number of outliers in Mileage After Imputation:", mileage_outliers_after_imputation$num_outliers))
 
-# Summary statistics for numerical columns
+# Summary statistics for numerical columns to understand the distribution of data
 summary_stats <- cleaned_data %>%
   summarise(
     Mean_Price = mean(Price, na.rm = TRUE),
@@ -362,7 +353,7 @@ summary_stats <- cleaned_data %>%
 
 print(summary_stats)
 
-# Histogram of car prices
+# Histogram of car prices to visualize the distribution of car prices
 ggplot(cleaned_data, aes(x = Price)) +
   geom_histogram(binwidth = 5000, fill = "blue", color = "black", alpha = 0.7) +
   labs(title = "Distribution of Car Prices", x = "Price (£)", y = "Car Number") +
@@ -373,7 +364,7 @@ correlation_matrix <- cor(cleaned_data[, c("Year", "Price", "Mileage")], use = "
 print("Correlation Matrix for Year, Price, and Mileage:")
 print(correlation_matrix)
 
-# Correlation Heatmap
+# Correlation Heatmap using ggcorrplot to visualize the correlation matrix between Year, Price, and Mileage
 heatmap_plot <- ggcorrplot(
   correlation_matrix,
   method = "square", # Square layout
@@ -388,3 +379,16 @@ print(heatmap_plot)
 
 # Save the cleaned data to a CSV file
 write.csv(cleaned_data, "cleaned_cars_data.csv", row.names = FALSE)
+
+#CHALLENGES FACED
+#Challenge:  Inability to get access car data from facebook market place due to Facebook data policy and Anti-Bot Measures to deter anti-human activity on their website, where we could have collected more Car data for this project but wasn't possible due to the restriction on the website.
+#Solution: to avoid bypass and to respect website policies, spent more time searching for alternative used Car websites that gave permission to Scrape their data.
+
+#Challenge: Structural update of used car websites breaks the scraping script, eg when the car details CSS selectors of Cinch website was updated on 11th March, our scraping script failed.
+#Solution: Frequently monitored the website for changes and updated the script accordingly.
+
+#Challenge:  Inability to get the exact number of pages to scrape from the Cinch website due to the pagination links not being available in the HTML content.
+#Solution:  Used the pagination links to determine the maximum page number based on the pagination links and set a default value of 13 if no pagination links were found.
+
+# Challenge: Ethical concerns regarding web scraping and data privacy.
+# Solution:  Followed the robots.txt file of the websites to ensure compliance with their scraping policies and confirmed permission before scraping the data.
