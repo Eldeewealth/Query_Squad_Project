@@ -18,6 +18,7 @@ all_pages_data_theaa <- list()
 all_pages_data_cinch <- list()
 # Loop through pages 1 to 15 for TheAA
 for (page_num in 1:15) {
+  set.sleep(1) # Pause for 1 second between requests to avoid overwhelming the server
   # Construct the URL for the current page
   if (page_num == 1) {
     url_theaa <- "https://www.theaa.com/used-cars/local/greater-manchester"
@@ -119,6 +120,8 @@ for (page_num in 1:max_page) {
   if (response_cinch$status_code != 200) {
     cat("Failed to fetch page", page_num, "\n")
     next
+
+    set.sleep(1) # Pause for 1 second between requests to avoid overwhelming the server
   }
   
   content_cinch <- content(response_cinch, as = "text", encoding = "UTF-8")
