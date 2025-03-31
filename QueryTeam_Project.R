@@ -11,7 +11,7 @@ library(stringr) # For string manipulation and regular expressions
 library(ggplot2) # For data visualization and plotting
 library(ggcorrplot) # For correlation heatmap visualization
 library(mice) # For handling missing data and imputation
-library(robot) # For checking robots.txt file
+library(robots.txt) # For checking robots.txt file
 
 # Function to check if scraping is allowed
 is_scraping_allowed <- function(url) {
