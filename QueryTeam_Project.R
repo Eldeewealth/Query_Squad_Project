@@ -11,7 +11,19 @@ library(stringr) # For string manipulation and regular expressions
 library(ggplot2) # For data visualization and plotting
 library(ggcorrplot) # For correlation heatmap visualization
 library(mice) # For handling missing data and imputation
+library(robot) # For checking robots.txt file
 
+# Function to check if scraping is allowed
+is_scraping_allowed <- function(url) {
+  paths_allowed(url)
+}
+
+# Check if scraping is allowed for both websites
+if (!is_scraping_allowed("https://www.theaa.com") || !is_scraping_allowed("https://www.cinch.co.uk")) {
+  stop("Scraping is not allowed on one or both websites.")
+} else {
+  print("Scraping is allowed on both websites.")
+}
 
 # Initialize empty lists to store data for all pages of both websites
 all_pages_data_theaa <- list()
