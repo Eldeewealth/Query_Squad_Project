@@ -174,39 +174,162 @@ for (page_num in 1:max_page) {
   # Optional: Print progress for each page scraped in Cinch website 
   print(paste("Scraped Cinch page", page_num))
 }
-
-# Combine data from all pages of Cinch into one data frame
+# Combine all Cinch data
 cars_data_cinch_all <- do.call(rbind, all_pages_data_cinch)
 
-# View the final combined data
-print(cars_data_cinch_all)
+# Combine data from all pages of Cinch into one data frame
+combined_data <- full_join(cars_data_theaa_all, cars_data_cinch_all, by = c("Name", "Price", "Year", "Mileage", "Fuel", "Transmission"))
 
-# Combine the datasets
-cars_data_theaa_all$Source <- "TheAA" # Add a "Source" column for TheAA data
-cars_data_cinch_all$Source <- "Cinch" # Add a "Source" column for Cinch data
+# Detect missing values using colSums
+missing_values_summary <- colSums(is.na(combined_data))
+print("Summary of Missing Values:")
+print(missing_values_summary)
 
-# Combine the datasets into one
-combined_data <- rbind(cars_data_theaa_all, cars_data_cinch_all)
+# Alternatively, fill missing values using Random Sampling
+observed_values <- combined_data$Transmission[!is.na(combined_data$Transmission)]
+combined_data$Transmission[is.na(combined_data$Transmission)] <- sample(observed_values, sum(is.na(combined_data$Transmission)), replace = TRUE)
 
-# Clean the Price column by removing £, commas, and "+ VAT" and converting to numeric
-combined_data$Price <- str_replace_all(combined_data$Price, "£|,|\\+ VAT", "") # Remove £, commas, and "+ VAT"
-combined_data$Price <- as.numeric(as.character(combined_data$Price)) # Convert to numeric
+# check to confirm missing values using colSums have been handled
+missing_values_summary <- colSums(is.na(combined_data))
+print("Summary of Missing Values:")
+print(missing_values_summary)
 
-# View the cleaned Price column to ensure it is numeric
-print(combined_data$Price)
+# Clean the Price column
+combined_data$Price <- str_replace_all(combined_data$Price, "£|,|\\+ VAT", "")
+combined_data$Price <- as.numeric(as.character(combined_data$Price))
 
-# Clean the Mileage column by removing " miles" and commas, and converting to numeric
-combined_data$Mileage <- str_replace_all(combined_data$Mileage, " miles", "") # Remove " miles"
-combined_data$Mileage<- as.numeric(str_replace_all(combined_data$Mileage, ",", ""))
+# Clean the Mileage column
+combined_data$Mileage <- str_replace_all(combined_data$Mileage, " miles", "")
+combined_data$Mileage <- as.numeric(str_replace_all(combined_data$Mileage, ",", ""))
 
-# View the final dataset
-print(combined_data)
+# Convert Year to numeric
+combined_data$Year <- as.numeric(combined_data$Year)
 
-# Save the data to a CSV file
-write.csv(combined_data, "scraped_cars_data.csv", row.names = FALSE)
+# Box Plot for Price and Mileage by Year (After Imputation)
+ggplot(combined_data, aes(x = factor(Year))) + 
+  geom_boxplot(aes(y = Price, fill = "Price"), alpha = 0.5, outlier.color = "red") +
+  geom_boxplot(aes(y = Mileage, fill = "Mileage"), alpha = 0.5, outlier.color = "blue") +
+  scale_fill_manual(values = c("Price" = "blue", "Mileage" = "red")) +
+  labs(title = "Box Plot of Price and Mileage by Year (After Imputation)",
+       x = "Year",
+       y = "Value") +
+  theme_minimal()
 
-# Summary statistics and visualizations of the data
-summary_stats <- combined_data %>%
+# Function to detect outliers using IQR
+detect_outliers <- function(column) {
+  Q1 <- quantile(column, 0.25, na.rm = TRUE)
+  Q3 <- quantile(column, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 1.5 * IQR
+  upper_bound <- Q3 + 1.5 * IQR
+  
+  # Identify outliers
+  outliers <- column[column < lower_bound | column > upper_bound]
+  
+  return(list(
+    lower_bound = lower_bound,
+    upper_bound = upper_bound,
+    outliers = outliers,
+    num_outliers = length(outliers) # Count the number of outliers
+  ))
+}
+
+# Apply outlier detection to Price and Mileage columns
+price_outliers <- detect_outliers(combined_data$Price)
+mileage_outliers <- detect_outliers(combined_data$Mileage)
+
+# Output the results for Price
+print("Outliers in Price:")
+print(price_outliers$outliers)
+cat("Number of outliers in Price:", price_outliers$num_outliers, "\n")
+
+# Output the results for Mileage
+print("Outliers in Mileage:")
+print(mileage_outliers$outliers)
+cat("Number of outliers in Mileage:", mileage_outliers$num_outliers, "\n")
+
+# Function to replace outliers with NA
+replace_outliers_with_na <- function(column) {
+  Q1 <- quantile(column, 0.25, na.rm = TRUE)
+  Q3 <- quantile(column, 0.75, na.rm = TRUE)
+  IQR <- Q3 - Q1
+  lower_bound <- Q1 - 1.5 * IQR
+  upper_bound <- Q3 + 1.5 * IQR
+  column[column < lower_bound | column > upper_bound] <- NA
+  return(column)
+}
+
+# Replace outliers in Price and Mileage columns with NA
+combined_data$Price <- replace_outliers_with_na(combined_data$Price)
+combined_data$Mileage <- replace_outliers_with_na(combined_data$Mileage)
+
+# Check to confirm missing values using colSums
+check_NA <- colSums(is.na(combined_data))
+print("Summary of Missing Values After Replacing Outliers:")
+print(check_NA)
+
+# Impute missing values using mice
+imputed_data <- mice(combined_data, 5) # Predictive mean matching
+complete_data <- complete(imputed_data)
+
+# Check summary after imputation
+summary(complete_data)
+
+# Check to confirm missing values have been handled after imputation
+check_NA_after_imputation <- colSums(is.na(complete_data))
+print("Summary of Missing Values After Imputation:")
+print(check_NA_after_imputation)
+
+# Box Plot for Price and Mileage by Year (After Imputation)
+ggplot(complete_data, aes(x = factor(Year))) + 
+  geom_boxplot(aes(y = Price, fill = "Price"), alpha = 0.5, outlier.color = "red") +
+  geom_boxplot(aes(y = Mileage, fill = "Mileage"), alpha = 0.5, outlier.color = "blue") +
+  scale_fill_manual(values = c("Price" = "blue", "Mileage" = "red")) +
+  labs(title = "Box Plot of Price and Mileage by Year (After Imputation)",
+       x = "Year",
+       y = "Value") +
+  theme_minimal()
+
+# Detect outliers in Price and Mileage after imputation
+price_outliers_after_imputation <- detect_outliers(complete_data$Price)
+mileage_outliers_after_imputation <- detect_outliers(complete_data$Mileage)
+
+# Output the results for Price
+print("Outliers in Price After Imputation:")
+print(price_outliers_after_imputation$outliers)
+cat("Number of outliers in Price After Imputation:", price_outliers_after_imputation$num_outliers, "\n")
+
+# Output the results for Mileage
+print("Outliers in Mileage After Imputation:")
+print(mileage_outliers_after_imputation$outliers)
+cat("Number of outliers in Mileage After Imputation:", mileage_outliers_after_imputation$num_outliers, "\n")
+
+# Drop rows with outliers in Price and Mileage
+cleaned_data <- complete_data %>%
+  filter(Price >= price_outliers_after_imputation$lower_bound & Price <= price_outliers_after_imputation$upper_bound) %>%
+  filter(Mileage >= mileage_outliers_after_imputation$lower_bound & Mileage <= mileage_outliers_after_imputation$upper_bound)
+
+# Verify the number of rows after dropping outliers
+cat("Number of rows before dropping outliers:", nrow(complete_data), "\n")
+cat("Number of rows after dropping outliers:", nrow(cleaned_data), "\n")
+
+
+# Detect outliers in Price and Mileage after dropping the rows that have outliers
+price_outliers_after_cleaning <- detect_outliers(cleaned_data$Price)
+mileage_outliers_after_cleaning <- detect_outliers(cleaned_data$Mileage)
+
+# Output the results for Price
+print("Outliers in Price After Imputation:")
+print(price_outliers_after_cleaning$outliers)
+cat("Number of outliers in Price After Imputation:", price_outliers_after_imputation$num_outliers, "\n")
+
+# Output the results for Mileage
+print("Outliers in Mileage After Imputation:")
+print(mileage_outliers_after_cleaning$outliers)
+cat("Number of outliers in Mileage After Imputation:", mileage_outliers_after_imputation$num_outliers, "\n")
+
+# Summary statistics for numerical columns
+summary_stats <- cleaned_data %>%
   summarise(
     Mean_Price = mean(Price, na.rm = TRUE),
     Median_Price = median(Price, na.rm = TRUE),
@@ -218,68 +341,31 @@ summary_stats <- combined_data %>%
     Max_Mileage = max(Mileage, na.rm = TRUE)
   )
 
-print(summary_stats) # Display the summary statistics
+print(summary_stats)
 
-# Create the box plot for Price by Year and Mileage by Year in one plot
-ggplot(combined_data) + 
-  geom_boxplot(aes(x = factor(Year), y = Price, color = "Price", fill = "blue"), alpha = 0.3) +
-  geom_boxplot(aes(x = factor(Year), y = Mileage, color = "Mileage", fill = "red"), alpha = 0.3) +
-  labs(title = "Box Plot of Price and Mileage by Year",
-       x = "Year",
-       y = "Value") +
-  scale_color_manual(values = c("Price" = "blue", "Mileage" = "red")) +
-  theme_minimal()
-
-# Histogram of car prices with binwidth of 5000
-ggplot(combined_data, aes(x = Price)) +
+# Histogram of car prices
+ggplot(cleaned_data, aes(x = Price)) +
   geom_histogram(binwidth = 5000, fill = "blue", color = "black", alpha = 0.7) +
   labs(title = "Distribution of Car Prices", x = "Price (£)", y = "Car Number") +
   theme_minimal()
-# Save the plot to a PNG file
-ggsave("line_plot_year_price_mileage.png", width = 10, height = 6, dpi = 300)
 
-# Convert Year to numeric for scatter plot
-combined_data$Year <- as.numeric(combined_data$Year)
-combined_data$Mileage <- as.numeric(combined_data$Mileage)
+# Calculate the correlation matrix for Year, Price, and Mileage
+correlation_matrix <- cor(cleaned_data[, c("Year", "Price", "Mileage")], use = "complete.obs")
+print("Correlation Matrix for Year, Price, and Mileage:")
+print(correlation_matrix)
 
-# Scatter plot of Price vs Mileage with color by Source (TheAA, Cinch)
-scatter_plot <- ggplot(combined_data, aes(x = Mileage, y = Price, color = Source)) +
-  geom_point(alpha = 0.6) +
-  scale_color_manual(values = c("TheAA" = "green", "Cinch" = "blue")) +
-  labs(
-    title = "Car Price vs Mileage",
-    x = "Mileage (in miles)",
-    y = "Price (£)",
-    color = "Source"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "top",
-    plot.title = element_text(hjust = 0.5),
-    axis.title = element_text(size = 12),
-    axis.text = element_text(size = 10)
-  ) 
-# Ensure the plot is displayed before saving
-print(scatter_plot) # Display the plot as output
-# Save the plot using ggsave
-ggsave("car_price_vs_mileage_plot.png", plot = scatter_plot, width = 8, height = 6, dpi = 300)
+# Correlation Heatmap
+heatmap_plot <- ggcorrplot(
+  correlation_matrix,
+  method = "square", # Square layout
+  type = "lower",    # Show only the lower triangle
+  lab = TRUE,        # Add correlation coefficients as labels
+  lab_size = 3,      # Font size for labels
+  title = "Correlation Heatmap of Car Data",
+  colors = c("#6D9EC1", "white", "#E46726") # Blue for positive, white for neutral, red for negative
+)
+# Display the heatmap
+print(heatmap_plot)
 
-# HeatMap visualisation
-
-#  Correlation Heatmap
-car_data <- read.csv("scraped_cars_data.csv") # Read the CSV file into the car_data dataframe
-
-# Select only the numeric columns for correlation analysis (Price, Mileage, Year)
-numeric_data <- car_data %>% select(Price, Mileage, Year) 
-cor_matrix <- cor(numeric_data, use="complete.obs") # Compute the correlation matrix using the complete observations method
-# Create the correlation heatmap using ggcorrplot package
-ggcorrplot(cor_matrix, method="square", type="lower", lab=TRUE, lab_size=3, 
-           title="Correlation Heatmap of Car Data")
-
-# Save plot as PNG using ggsave()
-ggsave(filename = "correlation_heatmap.png", 
-       plot = heatmap_plot, 
-       width = 10, 
-       height = 8, 
-       dpi = 300)
-
+# Save the cleaned data to a CSV file
+write.csv(cleaned_data, "cleaned_cars_data.csv", row.names = FALSE)
