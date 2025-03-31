@@ -10,6 +10,7 @@ library(dplyr) # For data manipulation and transformation
 library(stringr) # For string manipulation and regular expressions
 library(ggplot2) # For data visualization and plotting
 library(ggcorrplot) # For correlation heatmap visualization
+library(mice) # For handling missing data and imputation
 
 
 # Initialize empty lists to store data for all pages of both websites
