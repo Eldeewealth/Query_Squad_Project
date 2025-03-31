@@ -25,7 +25,19 @@ The **Query Squad Project** is a web scraping and data analysis project aimed at
 9. [License](#license)
 
 ---
-
+ ```
+   Query_Squad_Project/
+   ├── README.md               # Project documentation
+   ├── LICENSE                 # License file (e.g., MIT License)
+   ├── Query_Squad_Project.R   # Main R script
+   ├── data/                   # Folder for raw and cleaned data
+   │   ├── scraped_cars_data.csv
+   │   └── cleaned_cars_data.csv
+   ├── figures/                # Folder for generated visualizations
+   │   ├── correlation_heatmap.png
+   │   └── car_price_vs_mileage_plot.png
+   └── .gitignore              # Ignore unnecessary files
+   ```
 ## Installation
 
 To run this project locally, follow these steps:
@@ -69,6 +81,7 @@ The project relies on the following R libraries:
 - **`stringr`**: For string manipulation.
 - **`ggplot2`**: For creating visualizations.
 - **`ggcorrplot`**: For generating correlation heatmaps.
+- **`mice`**: For handling missing data and imputation in R
 
 Install these dependencies using the `install.packages()` function as shown in the [Installation](#installation) section.
 
