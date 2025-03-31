@@ -9,8 +9,15 @@ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. The above copyright notice and this permission notice shall be included in all
+   copies or substantial portions of the Software.
+
+2. Any person using, distributing, or modifying the Software must acknowledge the
+   original author, **Loveday Okoro**, in any related documentation, publications,
+   or public communications. This acknowledgment should take the form:
+   
+This project uses software developed by Loveday Okoro and Team. For more information,
+visit https://github.com/Eldeewealth/Query_Squad_Project.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
