@@ -195,6 +195,9 @@ cars_data_cinch_all <- do.call(rbind, all_pages_data_cinch)
 
 # Combine data from all pages of Cinch into one data frame
 combined_data <- full_join(cars_data_theaa_all, cars_data_cinch_all, by = c("Name", "Price", "Year", "Mileage", "Fuel", "Transmission"))
+combined_data <- distinct(combined_data)
+
+print("Data merged and duplicates removed.")
 
 # Detect missing values using colSums
 missing_values_summary <- colSums(is.na(combined_data))
